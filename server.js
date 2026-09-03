@@ -1,4 +1,4 @@
-// server.js - Servidor IEAD 2.0
+// server.js - Servidor IEAD 2.0 - CORRIGIDO PRO RENDER
 const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
@@ -27,9 +27,14 @@ io.on('connection', (socket) => {
   });
 });
 
-const PORT = 3000;
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'display.html'));
+});
+
+const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
   console.log(`✅ SERVIDOR IEAD RODANDO em http://localhost:${PORT}`);
   console.log(`Display: http://localhost:${PORT}/display.html`);
   console.log(`Controle: http://localhost:${PORT}/controle.html`);
+  console.log(`Available at your primary URL https://iead-doules.onrender.com`);
 });
