@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8">
+<script src="/socket.io/socket.io.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700;900&family=Bebas+Neue&display=swap" rel="stylesheet">
+<style>
+*{font-family:'Montserrat',sans-serif;box-sizing:border-box}
+body{margin:0;background:transparent;overflow:hidden}
+.box{position:fixed;will-change:transform,opacity}
+
+/* 🔴 LIVE + TIMER */
+#live{top:20px;right:20px;display:flex;gap:10px;align-items:center;opacity:0;transform:translateY(-30px);transition:.5s}
+#live.on{opacity:1;transform:translateY(0)}
+#live .dot{background:#ff0000;color:#fff;padding:6px 14px;border-radius:20px;font-size:11px;font-weight:900;letter-spacing:1px;animation:pulse 1.5s infinite}
+#live .time{background:rgba(0,0,0,.75);color:#fff;padding:6px 14px;border-radius:20px;font-size:12px;backdrop-filter:blur(10px)}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(255,0,0,.7)}70%{box-shadow:0 0 0 10px rgba(255,0,0,0)}100%{box-shadow:0 0 0 0 rgba(255,0,0,0)}}
+
+/* BUG ANIMADO */
+#bug{bottom:20px;right:20px;background:linear-gradient(135deg,#0f3d1f,#1a6b33);color:#fff;padding:8px 18px;border-radius:30px;font-size:12px;font-weight:900;letter-spacing:1px;opacity:0;transform:translateX(100px) scale(.8);box-shadow:0 5px 20px rgba(0,0,0,.4)}
+#bug.on{animation:bugInOut 8s ease-in-out forwards}
+@keyframes bugInOut{0%{opacity:0;transform:translateX(100px) scale(.8)}15%{opacity:1;transform:translateX(0) scale(1)}85%{opacity:1;transform:translateX(0) scale(1)}100%{opacity:0;transform:translateX(100px) scale(.8)}}
+
+/* PREGADOR */
+#pregador{bottom:40px;left:0;background:linear-gradient(90deg,#0f3d1f 0%,#1a6b33 70%,#2faa58 100%);color:#fff;padding:16px 35px 16px 25px;border-radius:0 40px 40px 0;transform:translateX(-110%);transition:.7s cubic-bezier(.68,-.55,.27,1.55);border-left:6px solid #4ade80;box-shadow:10px 10px 30px rgba(0,0,0,.5);overflow:hidden}
+#pregador.on{transform:translateX(0)} #pregador h1{margin:0;font-size:22px;text-transform:uppercase;font-weight:900} #pregador p{margin:3px 0 0 0;font-size:13px;opacity:.9}
+#pregador::after{content:'';position:absolute;top:0;left:0;width:100%;height:100%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.2),transparent);transform:translateX(-100%);animation:shimmer 3s infinite}
+@keyframes shimmer{100%{transform:translateX(100%)}}
+
+/* VERSICULO CAPRICHADO - AGORA NÃO SAI MAIS DA TELA */
+#versiculo{
+  top:50%;left:50%;
+  transform:translate(-50%,-50%) scale(.85);
+  background:linear-gradient(135deg,rgba(10,25,12,.97) 0%,rgba(0,0,0,.96) 100%);
+  backdrop-filter:blur(20px);color:#fff;
+  padding:0;
+  border-radius:20px;
+  text-align:left;
+  width:85vw;max-width:800px;
+  max-height:75vh;
+  border:1px solid rgba(74,222,128,.35);
+  opacity:0;pointer-events:none;
+  transition:.6s cubic-bezier(.68,-.55,.27,1.55);
+  box-shadow:0 25px 80px rgba(0,0,0,.8);
+  overflow:hidden;
+  display:flex;flex-direction:column;
+}
+#versiculo.on{opacity:1;transform:translate(-50%,-50%) scale(1);pointer-events:all}
+#versiculo .v-top{height:4px;background:linear-gradient(90deg,#4ade80,#1a6b33,#4ade80);background-size:200% 100%;animation:shine 3s linear infinite}
+@keyframes shine{0%{background-position:0%}100%{background-position:200%}}
+#versiculo .v-content{padding:28px 38px;overflow-y:auto}
+#versiculo h2{margin:0 0 14px 0;font-size:12px;letter-spacing:3px;color:#4ade80;font-weight:900;text-transform:uppercase;display:flex;align-items:center;gap:10px}
+#versiculo h2::before{content:'';width:28px;height:2px;background:#4ade80;display:inline-block}
+#versiculo p{font-size:28px;line-height:1.32;margin:0;font-weight:800;word-wrap:break-word;white-space:pre-wrap;overflow-wrap:break-word}
+#versiculo .v-foot{padding:12px 38px;background:rgba(74,222,128,.08);border-top:1px solid rgba(74,222,128,.15);font-size:10px;letter-spacing:2px;opacity:.6;display:flex;justify-content:space-between;text-transform:uppercase}
+
+/* OFERTORIO - CNPJ CORRIGIDO */
+#ofertorio{bottom:90px;left:50%;transform:translateX(-50%) translateY(150%);background:#fff;color:#111;padding:25px 35px;border-radius:18px;width:500px;text-align:center;box-shadow:0 20px 50px rgba(0,0,0,.6);transition:.7s cubic-bezier(.68,-.55,.27,1.55)}
+#ofertorio.on{transform:translateX(-50%) translateY(0)}
+
+/* TELAS CHEIAS */
+#abertura{inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column;opacity:0;pointer-events:none;transition:.8s;transform:scale(1.1)}
+#abertura.on{opacity:1;pointer-events:all;transform:scale(1)}
+#abertura .bg{position:absolute;inset:0;background:radial-gradient(ellipse at center,#1a6b33 0%,#0a2a14 60%,#050f08 100%);z-index:1}
+#abertura .bg::before{content:'';position:absolute;inset:0;background:repeating-linear-gradient(45deg,transparent 30px,rgba(74,222,128,.03) 30px,rgba(74,222,128,.03) 60px);animation:moveBg 20s linear infinite}
+@keyframes moveBg{0%{transform:translate(0,0)}100%{transform:translate(60px,60px)}}
+#abertura .content{position:relative;z-index:2;text-align:center;color:#fff}
+#abertura h1{font-family:'Bebas Neue';font-size:85px;margin:0;letter-spacing:3px;line-height:.9;text-shadow:0 5px 30px rgba(0,0,0,.8);animation:glow 2s ease-in-out infinite alternate}
+#abertura p{font-size:20px;margin:15px 0 0 0;opacity:.85;letter-spacing:1px;font-weight:400}
+#abertura .linha{width:120px;height:4px;background:linear-gradient(90deg,#4ade80,#1a6b33);margin:20px auto;border-radius:2px;animation:linhaGrow 1s ease-out .5s both}
+#abertura .sub2{margin-top:30px;font-size:11px;letter-spacing:4px;opacity:.5;text-transform:uppercase}
+@keyframes glow{from{text-shadow:0 5px 30px rgba(0,0,0,.8),0 0 20px rgba(74,222,128,.3)} to{text-shadow:0 5px 30px rgba(0,0,0,.8),0 0 40px rgba(74,222,128,.6)}}
+@keyframes linhaGrow{from{width:0} to{width:120px}}
+</style>
+</head><body>
+
+<div id="live" class="box"><div class="dot">🔴 AO VIVO</div><div class="time" id="live_time">00:00:00</div></div>
+<div id="bug" class="box">IEAD • MINISTÉRIO DOULOS</div>
+<div id="pregador" class="box"><h1 id="p_nome">Pr. Nome</h1><p id="p_cargo">Preletor</p></div>
+
+<div id="versiculo" class="box">
+  <div class="v-top"></div>
+  <div class="v-content">
+    <h2 id="v_ref">JOÃO 3:16</h2>
+    <p id="v_txt">Texto</p>
+  </div>
+  <div class="v-foot"><span>Palavra de Deus</span><span>IEAD Doulos</span></div>
+</div>
+
+<div id="ofertorio" class="box"><h1 style="margin:0;color:#1a6b33;font-size:20px">💰 MOMENTO DE OFERTA E DÍZIMO</h1><p style="font-size:12px;line-height:1.5;margin:10px 0 0 0"><b>IGREJA EVAG. ASSEMBLEIA DE DEUS - MIN. DOULOS</b><br>CNPJ: 44.983.931/0001-22<br>PIX (CNPJ): 44.983.931/0001-22</p></div>
+
+<div id="abertura" class="box">
+  <div class="bg"></div>
+  <div class="content">
+    <h1 id="a_tit">CULTO<br>INICIANDO</h1>
+    <div class="linha"></div>
+    <p id="a_sub">Fique conosco - Já vamos começar</p>
+    <div class="sub2">IEAD • MINISTÉRIO DOULOS</div>
+  </div>
+</div>
+
+<script>
+const socket=io();
+let timerInt=null, cultoStart=null, cultoAcc=0;
+function startTimer(){if(timerInt) clearInterval(timerInt); cultoStart=Date.now(); timerInt=setInterval(()=>{let diff=Date.now()-cultoStart+cultoAcc; let s=Math.floor(diff/1000); let h=String(Math.floor(s/3600)).padStart(2,'0'), m=String(Math.floor(s%3600/60)).padStart(2,'0'), sec=String(s%60).padStart(2,'0'); live_time.innerText=`${h}:${m}:${sec}`},1000)}
+function stopTimer(){clearInterval(timerInt); if(cultoStart) cultoAcc+=Date.now()-cultoStart; cultoStart=null}
+
+function autoFit(){
+  const p=document.getElementById('v_txt');
+  const box=document.getElementById('versiculo');
+  let size=28;
+  p.style.fontSize=size+'px';
+  // Diminui até caber na tela
+  while(box.scrollHeight > window.innerHeight*0.78 && size>14){
+    size-=1;
+    p.style.fontSize=size+'px';
+  }
+}
+
+socket.on('update',d=>{
+ if(d.live_on!==undefined) live.classList.toggle('on',d.live_on);
+ if(d.timer_action==='start') startTimer();
+ if(d.timer_action==='pause') stopTimer();
+ if(d.timer_action==='reset'){stopTimer();cultoAcc=0;live_time.innerText='00:00:00'}
+ if(d.bug_on){bug.classList.remove('on');void bug.offsetWidth;bug.classList.add('on'); if(d.bug_loop){setTimeout(()=>{if(document.querySelector('#bug.on')){bug.classList.remove('on');void bug.offsetWidth;bug.classList.add('on')}},9000)}}
+ if(d.pregador_on!==undefined){
+   if(d.pregador_nome) p_nome.innerText=d.pregador_nome;
+   if(d.pregador_cargo) p_cargo.innerText=d.pregador_cargo;
+   if(d.pregador_on) pregador.classList.add('on'); else pregador.classList.remove('on');
+   if(d.pregador_on && d.pregador_auto) setTimeout(()=>pregador.classList.remove('on'),8000);
+ }
+ if(d.versiculo_on!==undefined){
+   if(d.v_ref) v_ref.innerText=d.v_ref;
+   if(d.v_txt) v_txt.innerText=d.v_txt;
+   if(d.versiculo_on){versiculo.classList.add('on'); setTimeout(autoFit,80);}
+   else versiculo.classList.remove('on');
+   if(d.versiculo_on && d.versiculo_auto) setTimeout(()=>versiculo.classList.remove('on'),10000);
+ }
+ if(d.ofertorio_on!==undefined) ofertorio.classList.toggle('on',!!d.ofertorio_on);
+ if(d.abertura_on!==undefined){
+   if(d.a_tit) a_tit.innerHTML=d.a_tit.replace('\n','<br>');
+   if(d.a_sub!==undefined) a_sub.innerText=d.a_sub;
+   if(d.abertura_on) abertura.classList.add('on'); else abertura.classList.remove('on');
+ }
+});
+</script></body></html>
