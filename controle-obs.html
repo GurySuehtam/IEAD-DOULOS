@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1,maximum-scale=1">
+<title>IGREJA CONTROL PRO MAX</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://unpkg.com/obs-websocket-js@5.0.5/dist/obs-ws.js"></script>
+<style>
+:root{--a:#7c3aed} body{background:#050507}
+.glass{background:rgba(20,20,23,.75);backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,.1)}
+.btn{transition:.15s}.btn:active{scale:.92}
+.no-scrollbar::-webkit-scrollbar{display:none}
+</style>
+</head>
+<body class="text-white font-sans select-none">
+<!-- TOPO COM BOTÃO VOLTAR -->
+<div class="sticky top-0 z-50 glass p-2 flex gap-2 items-center">
+<a href="/controle.html" class="bg-[#4ade80] text-black px-4 py-3 rounded-xl font-black text-[13px] flex items-center gap-1">← GC / VERSÍCULO</a>
+<input id="ip" class="flex-1 bg-black border border-zinc-800 rounded-xl px-3 py-3 text-sm" value="127.0.0.1" placeholder="IP OBS">
+<input id="senha" class="w-24 bg-black border border-zinc-800 rounded-xl px-3 py-3 text-sm" value="587433" placeholder="Senha">
+<button onclick="toggleVideo()" class="w-11 h-11 rounded-xl glass btn">👁️</button>
+<button onclick="trocarTema()" class="w-11 h-11 rounded-xl glass btn">🎨</button>
+<button onclick="conectar()" class="bg-white text-black px-5 rounded-xl font-black btn">GO</button>
+</div>
+
+<div class="relative w-full aspect-video bg-black overflow-hidden" id="videoWrap">
+<img id="preview" class="w-full h-full object-contain">
+<div id="noVideo" class="hidden absolute inset-0 flex-col items-center justify-center text-zinc-600"><span class="text-6xl">📺</span><p class="mt-2 text-sm">MODO ECONOMIA - Vídeo oculto</p></div>
+<div class="absolute inset-0 pointer-events-none">
+<div id="stats" class="absolute top-3 left-1/2 -translate-x-1/2 glass px-3 py-1 rounded-full text-[10px] tracking-widest pointer-events-auto">DESCONECTADO</div>
+<button class="pointer-events-auto absolute top-3 left-3 glass px-4 py-2 rounded-full text-xs font-bold btn bg-green-500 text-black border-0" onclick="callObs('StartStream')">▶ LIVE</button>
+<button class="pointer-events-auto absolute top-3 right-3 glass px-4 py-2 rounded-full text-xs font-bold btn bg-red-500/90" onclick="callObs('StopStream')">⏹ FIM</button>
+<button id="recBtn" class="pointer-events-auto absolute bottom-3 left-3 glass px-4 py-2 rounded-full text-xs font-bold btn" onclick="toggleRec()">🔴 REC</button>
+<button class="pointer-events-auto absolute bottom-3 right-3 glass px-4 py-2 rounded-full text-xs font-bold btn" onclick="mutarTudo()">🎙 MUTE TUDO</button>
+</div>
+</div>
+
+<div class="grid grid-cols-4 gap-2 p-2 bg-zinc-950 text-[11px]">
+<div class="glass rounded-xl p-2 text-center"><div class="text-zinc-500">LIVE</div><div id="liveTime" class="font-bold">00:00:00</div></div>
+<div class="glass rounded-xl p-2 text-center"><div class="text-zinc-500">REC</div><div id="recTime" class="font-bold text-red-400">00:00:00</div></div>
+<div class="glass rounded-xl p-2 text-center"><div class="text-zinc-500">FPS/REDE</div><div id="fpsInfo" class="font-bold">--</div></div>
+<div class="glass rounded-xl p-2 text-center"><div class="text-zinc-500">TRANSIÇÃO</div><select id="transicao" onchange="setTransicao()" class="bg-transparent w-full font-bold text-center"><option>Corte</option><option>Fade</option></select></div>
+</div>
+
+<div class="p-3">
+<div class="flex justify-between items-center mb-2"><h2 class="font-black text-sm tracking-widest">CENAS</h2><button onclick="toggleStudio()" id="studioBtn" class="text-[10px] glass px-3 py-1 rounded-full">MODO ESTÚDIO: OFF</button></div>
+<div id="listaCenas" class="flex gap-2 overflow-x-auto no-scrollbar pb-2"></div>
+</div>
+
+<div class="p-3 bg-zinc-950 border-t border-zinc-900">
+<h2 class="font-black text-sm tracking-widest mb-2">MIXER DE ÁUDIO</h2>
+<div id="mixer" class="space-y-3"></div>
+</div>
+
+<div class="p-3 grid grid-cols-2 gap-2">
+<button onclick="quickText('JOÃO 3:16')" class="glass rounded-xl p-4 text-sm font-bold btn">✝️ João 3:16</button>
+<button onclick="quickText('BEM-VINDOS!')" class="glass rounded-xl p-4 text-sm font-bold btn">👋 Bem-vindos</button>
+<button onclick="callObs('SetCurrentProgramScene',{sceneName:''})" class="glass rounded-xl p-3 text-xs btn">⬛ Cena Preta</button>
+<button onclick="location.reload()" class="glass rounded-xl p-3 text-xs btn">🔄 Recarregar</button>
+</div>
+
+<div class="p-4 text-center text-[10px] text-zinc-600">FPS Preview: <input type="range" id="fpsSlider" min="50" max="300" value="85" oninput="mudarFPS(this.value)"> <span id="fpsLabel">12 FPS</span></div>
+
+<script>
+const obs=new OBSWebSocket(); let conectado=false, loop=null, loopStats=null, videoOn=true, gravando=false, fpsDelay=85;
+const $=id=>document.getElementById(id);
+let temas=[['#7c3aed','#22c55e'],['#06b6d4','#22c55e'],['#f59e0b','#f59e0b'],['#e11d48','#ef4444'],['#10b981','#fff']], ti=0;
+function trocarTema(){ti=(ti+1)%temas.length; document.documentElement.style.setProperty('--a',temas[ti][0]);}
+function toggleVideo(){videoOn=!videoOn; $('preview').style.display=videoOn?'block':'none'; $('noVideo').style.display=videoOn?'none':'flex'; if(videoOn) iniciarPreview(); else clearInterval(loop)}
+function mudarFPS(v){fpsDelay=parseInt(v); $('fpsLabel').textContent=Math.round(1000/v)+' FPS'; if(videoOn){clearInterval(loop); iniciarPreview()}}
+async function callObs(c,d={}){if(!conectado) return alert('Conecta primeiro'); try{await obs.call(c,d)}catch(e){alert(e.message)}}
+async function conectar(){
+ let ip=$('ip').value.trim(); if(ip.includes(':')&&!ip.startsWith('[')) ip=`[${ip}]`;
+ $('stats').textContent='Conectando...';
+ try{await obs.connect(`ws://${ip}:4455`, $('senha').value.trim()); conectado=true; $('stats').textContent='✅ CONECTADO'; carregarTudo(); iniciarStats()}catch(e){$('stats').textContent='❌ '+e.message}
+}
+async function carregarTudo(){
+ const {scenes,currentProgramSceneName}=await obs.call('GetSceneList');
+ const lista=$('listaCenas'); lista.innerHTML='';
+ scenes.forEach(s=>{
+  const b=document.createElement('button'); b.className='btn glass px-5 py-3 rounded-full text-sm font-bold whitespace-nowrap'+(s.sceneName===currentProgramSceneName?' bg-[var(--a)] border-[var(--a)]':'');
+  b.textContent=s.sceneName; b.onclick=async()=>{await obs.call('SetCurrentProgramScene',{sceneName:s.sceneName}); document.querySelectorAll('#listaCenas button').forEach(x=>x.classList.remove('bg-[var(--a)]')); b.classList.add('bg-[var(--a)]')};
+  lista.appendChild(b);
+ });
+ const {inputs}=await obs.call('GetInputList');
+ const mixer=$('mixer'); mixer.innerHTML='';
+ for(let inp of inputs){
+  try{
+   const {inputMuted}=await obs.call('GetInputMute',{inputName:inp.inputName});
+   const {inputVolumeDb, inputVolumeMul}=await obs.call('GetInputVolume',{inputName:inp.inputName});
+   const div=document.createElement('div'); div.className='glass rounded-xl p-3 flex items-center gap-3';
+   div.innerHTML=`<button class="w-10 h-10 rounded-full ${inputMuted?'bg-red-500':'glass'} btn muteBtn">🔇</button><div class="flex-1"><div class="text-xs font-bold">${inp.inputName}</div><input type="range" min="-100" max="0" value="${inputVolumeDb}" class="w-full accent-white vol"></div><div class="text-[10px] w-12 text-right volLabel">${Math.round(inputVolumeMul*100)}%</div>`;
+   const muteBtn=div.querySelector('.muteBtn'); const vol=div.querySelector('.vol'); const label=div.querySelector('.volLabel');
+   muteBtn.onclick=async()=>{await obs.call('ToggleInputMute',{inputName:inp.inputName}); const m=await obs.call('GetInputMute',{inputName:inp.inputName}); muteBtn.classList.toggle('bg-red-500',m.inputMuted)};
+   vol.oninput=async()=>{ await obs.call('SetInputVolume',{inputName:inp.inputName, inputVolumeDb:parseFloat(vol.value)}); const v=await obs.call('GetInputVolume',{inputName:inp.inputName}); label.textContent=Math.round(v.inputVolumeMul*100)+'%'};
+   mixer.appendChild(div);
+  }catch(e){}
+ }
+ iniciarPreview();
+}
+function iniciarPreview(){clearInterval(loop); if(!videoOn) return; loop=setInterval(async()=>{try{const {currentProgramSceneName}=await obs.call('GetCurrentProgramScene'); const {imageData}=await obs.call('GetSourceScreenshot',{sourceName:currentProgramSceneName,imageFormat:'jpeg',imageWidth:640,imageQuality:30}); $('preview').src=imageData}catch(e){}},fpsDelay)}
+function iniciarStats(){clearInterval(loopStats); loopStats=setInterval(async()=>{try{const s=await obs.call('GetStreamStatus'); const r=await obs.call('GetRecordStatus'); $('liveTime').textContent=s.outputTimecode||'00:00:00'; $('recTime').textContent=r.outputTimecode||'00:00:00'; $('fpsInfo').textContent=Math.round(s.outputFps||0)+' FPS';}catch(e){}},1000)}
+async function toggleRec(){if(!gravando){await callObs('StartRecord'); gravando=true; $('recBtn').textContent='⏹ STOP'; $('recBtn').classList.add('bg-red-500')}else{await callObs('StopRecord'); gravando=false; $('recBtn').textContent='🔴 REC'; $('recBtn').classList.remove('bg-red-500')}}
+async function mutarTudo(){const {inputs}=await obs.call('GetInputList'); for(let i of inputs){try{await obs.call('ToggleInputMute',{inputName:i.inputName})}catch(e){}} carregarTudo()}
+function setTransicao(){const v=$('transicao').value; obs.call('SetCurrentSceneTransition',{transitionName:v}).catch(()=>{})}
+let studio=false; async function toggleStudio(){studio=!studio; $('studioBtn').textContent='MODO ESTÚDIO: '+(studio?'ON':'OFF'); await obs.call('SetStudioModeEnabled',{studioModeEnabled:studio})}
+async function quickText(txt){try{await obs.call('SetInputSettings',{inputName:'Texto', inputSettings:{text:txt}})}catch(e){alert('Cria uma fonte de Texto chamada "Texto" no OBS primeiro')}}
+</script>
+</body>
+</html>
