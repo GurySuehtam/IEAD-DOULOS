@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<script src="/socket.io/socket.io.js"></script>
+<script src="https://iead-doules.onrender.com/socket.io/socket.io.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/obs-websocket-js@5.0.6/dist/obs-ws.min.js"></script>
 <style>
 body{margin:0;background:#0a0a0a;color:#fff;font-family:Arial;padding:12px}
@@ -22,60 +22,78 @@ label{font-size:12px;display:flex;align-items:center;gap:6px;margin:6px 0}
 <div id="lock"><div class="lbox"><h2 style="margin:0;color:#4ade80">🔒 IEAD DOULOS</h2><p style="opacity:.6;font-size:13px">Digite a senha</p><input id="pass" type="password" maxlength="6" placeholder="••••••" inputmode="numeric"><button onclick="checkPass()">ENTRAR</button><p id="err" style="color:#ff4444;display:none;margin-top:10px;font-size:13px">Senha incorreta!</p></div></div>
 
 <h2 style="text-align:center;margin:10px 0">🎛️ IEAD CONTROLE 2.0 - COMPLETO</h2>
+
+<div class="card" style="border-color:#4ade80">
+<h3>⚙️ CONEXÃO OBS - SÓ PRA TROCAR CÂMERA</h3>
+<div class="row"><input id="obs_ip" value="192.168.0.15" placeholder="IP do PC"><input id="obs_senha" value="iead123" style="width:90px"><button class="on" onclick="con()">CONECTAR</button></div>
+<p class="small">Se trocar câmera não funcionar, coloca o IP do PC da igreja aqui. Tarjas funcionam sem isso.</p>
+</div>
+
 <div class="card"><h3>📹 CÂMERAS OBS</h3><div class="row"><button class="cam" onclick="mudar('PULPITO',this)">PÚLPITO</button><button class="cam" onclick="mudar('PUBLICO',this)">PÚBLICO</button><button class="cam" onclick="mudar('CORINGA',this)">GERAL</button></div><p id="status" class="small" style="text-align:center">Conectando OBS...</p></div>
+
 <div class="card"><h3>🔴 LIVE + ⏱️ CRONÔMETRO DO CULTO</h3>
 <div class="row"><button class="on" onclick="send({live_on:true})">MOSTRAR 🔴LIVE</button><button class="off" onclick="send({live_on:false})">ESCONDER</button></div>
 <div class="row"><button class="on" onclick="send({timer_action:'start'})">▶️ INICIAR</button><button class="off" onclick="send({timer_action:'pause'})">⏸️ PAUSAR</button></div>
 <button class="off" style="width:100%;margin-top:6px" onclick="send({timer_action:'reset'})">🔄 ZERAR CRONÔMETRO</button>
 </div>
+
 <div class="card"><h3>✨ BUG ANIMADO - IEAD DOULOS</h3><p class="small">Sem logo, só texto chique que entra e sai sozinho</p>
 <div class="row"><button class="on" onclick="send({bug_on:true,bug_loop:false})">ENTRA 1x</button><button class="on" onclick="send({bug_on:true,bug_loop:true})">LOOP AUTO</button></div>
 </div>
+
 <div class="card"><h3>🎤 PREGADOR / DIRIGENTE</h3>
 <input id="p_nome" placeholder="Nome: Pr. João Silva">
 <input id="p_cargo" placeholder="Cargo: Preletor da Noite / Dirigente">
 <label><input type="checkbox" id="p_auto" checked> Auto-esconder após 8 segundos</label>
 <div class="row"><button class="on" onclick="mostrarPregador()">MOSTRAR PREGADOR</button><button class="off" onclick="send({pregador_on:false})">ESCONDER</button></div>
 </div>
+
 <div class="card"><h3>📖 VERSÍCULO</h3>
 <input id="v_ref" placeholder="Referência: João 3:16">
 <textarea id="v_txt" rows="2" placeholder="Texto do versículo..."></textarea>
 <label><input type="checkbox" id="v_auto" checked> Auto-esconder após 10 segundos</label>
 <div class="row"><button class="on" onclick="mostrarVersiculo()">MOSTRAR VERSÍCULO</button><button class="off" onclick="send({versiculo_on:false})">ESCONDER</button></div>
 </div>
+
 <div class="card"><h3>💰 OFERTÓRIO - CNPJ 44.983.931/0001-22</h3>
 <p class="small">Já configurado com PIX CNPJ</p>
 <div class="row"><button class="on" onclick="send({ofertorio_on:true})">MOSTRAR OFERTÓRIO</button><button class="off" onclick="send({ofertorio_on:false})">ESCONDER</button></div>
 </div>
+
 <div class="card"><h3>🎬 TELAS CHEIAS</h3>
 <input id="a_tit" value="CULTO INICIANDO">
 <input id="a_sub" value="Fique conosco - Já vamos começar">
 <div class="row"><button class="on" onclick="mostrarAbertura(a_tit.value, a_sub.value)">ABERTURA</button><button class="off" onclick="fecharTelas()">FECHAR</button></div>
 <div class="row" style="margin-top:6px"><button class="cam" onclick="mostrarAbertura('VOLTAMOS EM BREVE','Já retornamos')">INTERVALO</button><button class="cam" onclick="mostrarAbertura('DEUS ABENÇOE','ATÉ O PRÓXIMO CULTO - IEAD DOULOS')">ENCERRAMENTO</button></div>
 </div>
-<div class="card"><h3>👋 EXTRAS QUE VOCÊ PEDIU - AGORA COM FECHAR</h3>
+
+<div class="card"><h3>👋 EXTRAS - BOAS VINDAS / SANTA CEIA</h3>
 <div class="row"><button class="cam" style="background:#0f3d1f;border:1px solid #2faa58" onclick="mostrarAbertura('SEJA\nBEM-VINDO!','Você é nosso convidado especial\nIEAD MINISTÉRIO DOULOS')">BOAS-VINDAS</button><button class="cam" style="background:#0f3d1f;border:1px solid #2faa58" onclick="mostrarAbertura('SANTA CEIA\nDO SENHOR','Fazei isto em memória de mim\n1 Coríntios 11:24')">SANTA CEIA</button></div>
-<p class="small">Agora esses 2 usam a tela cheia caprichada e o botão FECHAR funciona pra eles!</p>
 <div class="row" style="margin-top:6px"><button class="off" onclick="fecharTelas()">FECHAR BOAS-VINDAS / SANTA CEIA</button></div>
 </div>
+
 <script>
 const SENHA="587433";
 if(localStorage.getItem('iead_auth')==='ok'){document.getElementById('lock').style.display='none'}
 function checkPass(){if(document.getElementById('pass').value===SENHA){localStorage.setItem('iead_auth','ok');document.getElementById('lock').style.display='none'}else{let e=document.getElementById('err');e.style.display='block';setTimeout(()=>e.style.display='none',2000)}}
 document.getElementById('pass')?.addEventListener('keyup',e=>{if(e.key==='Enter') checkPass()});
-const socket=io();
+
+// CORRIGIDO: AGORA CONECTA NO RENDER
+const socket=io('https://iead-doules.onrender.com');
 function send(d){socket.emit('update',d)}
 function mostrarPregador(){send({pregador_nome:p_nome.value,pregador_cargo:p_cargo.value,pregador_on:true,pregador_auto:p_auto.checked})}
 function mostrarVersiculo(){send({v_ref:v_ref.value,v_txt:v_txt.value,versiculo_on:true,versiculo_auto:v_auto.checked})}
-function mostrarAbertura(tit, sub){
-  send({abertura_on:true,a_tit:tit,a_sub:sub})
-}
-function fecharTelas(){
-  send({abertura_on:false})
-}
+function mostrarAbertura(tit, sub){ send({abertura_on:true,a_tit:tit,a_sub:sub}) }
+function fecharTelas(){ send({abertura_on:false}) }
+
 const obs=new OBSWebSocket();
-async function con(){try{await obs.connect('ws://localhost:4455','iead123');status.innerText='✅ OBS conectado'}catch{status.innerText='❌ Liga o WebSocket no OBS - senha iead123'}}
+async function con(){
+ let ip=document.getElementById('obs_ip').value.trim()||'localhost';
+ let senha=document.getElementById('obs_senha').value.trim()||'iead123';
+ try{await obs.connect(`ws://${ip}:4455`,senha);status.innerText='✅ OBS conectado em '+ip; localStorage.setItem('obs_ip',ip)}catch(e){status.innerText='❌ OBS desconectado (Tarjas ainda funcionam) - '+e.message}
+}
+let saved=localStorage.getItem('obs_ip'); if(saved) document.getElementById('obs_ip').value=saved;
 con();
-function mudar(n,b){document.querySelectorAll('.cam').forEach(x=>x.classList.remove('ativo')); b.classList.add('ativo'); obs.call('SetCurrentProgramScene',{sceneName:n}).catch(()=>status.innerText='Cena '+n+' não existe no OBS')}
+function mudar(n,b){document.querySelectorAll('.cam').forEach(x=>{if(['PULPITO','PUBLICO','CORINGA'].includes(x.textContent)) x.classList.remove('ativo')}); if(b) b.classList.add('ativo'); obs.call('SetCurrentProgramScene',{sceneName:n}).catch(()=>status.innerText='Cena '+n+' não existe no OBS')}
 </script>
 </body></html>
