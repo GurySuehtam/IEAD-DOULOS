@@ -1,87 +1,69 @@
 <!DOCTYPE html>
-<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1,maximum-scale=1">
+<html><head><meta charset="utf-8">
 <script src="/socket.io/socket.io.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/obs-websocket-js@5.0.6/dist/obs-ws.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700;900&family=Bebas+Neue&display=swap" rel="stylesheet">
 <style>
-body{margin:0;background:#050507;color:#fff;font-family:Arial;padding:0}
-.top-tabs{display:flex;gap:8px;padding:10px;position:sticky;top:0;z-index:100;background:#0a0a0a;border-bottom:1px solid #222}
-.top-tabs button{flex:1;padding:14px;border-radius:12px;border:none;font-weight:900}
-.tab{padding:12px;display:none} .tab.ativo{display:block}
-.card{background:#1c1c1c;border:1px solid #2a2a2a;border-radius:14px;padding:14px;margin:12px 0}
-h3{margin:0 0 10px 0;font-size:12px;letter-spacing:1px;color:#4ade80}
-input,textarea{width:100%;padding:11px;margin:5px 0;border-radius:8px;border:1px solid #333;background:#111;color:#fff;box-sizing:border-box}
-.row{display:flex;gap:6px} .row button{flex:1}
-button{padding:12px;border:none;border-radius:9px;font-weight:800;cursor:pointer;transition:.15s} button:active{scale:.96}
-.on{background:#1a6b33;color:#fff} .off{background:#2a2a2a;color:#bbb} 
-.cam{background:#222;border:1px solid #333;color:#fff;padding:14px} .cam.ativo{background:#1a6b33;border-color:#4ade80;box-shadow:0 0 15px rgba(74,222,128,.4)}
-.small{font-size:11px;opacity:.6;margin:6px 0}
-label{font-size:12px;display:flex;align-items:center;gap:6px;margin:6px 0}
-.glass{background:rgba(20,20,23,.8);backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,.1)}
-#lock{position:fixed;inset:0;background:#050a06;z-index:99999;display:flex;align-items:center;justify-content:center}
-#lock .lbox{background:#1a1f1c;padding:30px;border-radius:20px;border:1px solid #2faa58;width:90%;max-width:320px;text-align:center}
-#lock input{text-align:center;font-size:22px;letter-spacing:8px;margin:15px 0;padding:12px;border-radius:8px;border:1px solid #333;background:#111;color:#fff;width:100%;box-sizing:border-box}
-#preview{width:100%;aspect-ratio:16/9;background:#000;object-fit:contain;border-radius:12px;border:1px solid #222}
+*{font-family:'Montserrat',sans-serif;box-sizing:border-box}
+body{margin:0;background:transparent;overflow:hidden}
+.box{position:fixed;will-change:transform,opacity}
+#live{top:20px;right:20px;display:flex;gap:10px;align-items:center;opacity:0;transform:translateY(-30px);transition:.5s}
+#live.on{opacity:1;transform:translateY(0)}
+#live .dot{background:#ff0000;color:#fff;padding:6px 14px;border-radius:20px;font-size:11px;font-weight:900;letter-spacing:1px;animation:pulse 1.5s infinite}
+#live .time{background:rgba(0,0,0,.75);color:#fff;padding:6px 14px;border-radius:20px;font-size:12px;backdrop-filter:blur(10px)}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(255,0,0,.7)}70%{box-shadow:0 0 0 10px rgba(255,0,0,0)}100%{box-shadow:0 0 0 0 rgba(255,0,0,0)}}
+#bug{bottom:20px;right:20px;background:linear-gradient(135deg,#0f3d1f,#1a6b33);color:#fff;padding:8px 18px;border-radius:30px;font-size:12px;font-weight:900;letter-spacing:1px;opacity:0;transform:translateX(100px) scale(.8);box-shadow:0 5px 20px rgba(0,0,0,.4)}
+#bug.on{animation:bugInOut 8s ease-in-out forwards}
+@keyframes bugInOut{0%{opacity:0;transform:translateX(100px) scale(.8)}15%{opacity:1;transform:translateX(0) scale(1)}85%{opacity:1;transform:translateX(0) scale(1)}100%{opacity:0;transform:translateX(100px) scale(.8)}}
+#pregador{bottom:40px;left:0;background:linear-gradient(90deg,#0f3d1f 0%,#1a6b33 70%,#2faa58 100%);color:#fff;padding:16px 35px 16px 25px;border-radius:0 40px 40px 0;transform:translateX(-110%);transition:.7s cubic-bezier(.68,-.55,.27,1.55);border-left:6px solid #4ade80;box-shadow:10px 10px 30px rgba(0,0,0,.5);overflow:hidden}
+#pregador.on{transform:translateX(0)} #pregador h1{margin:0;font-size:22px;text-transform:uppercase;font-weight:900} #pregador p{margin:3px 0 0 0;font-size:13px;opacity:.9}
+#pregador::after{content:'';position:absolute;top:0;left:0;width:100%;height:100%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.2),transparent);transform:translateX(-100%);animation:shimmer 3s infinite}
+@keyframes shimmer{100%{transform:translateX(100%)}}
+#versiculo{top:50%;left:50%;transform:translate(-50%,-50%) scale(.85);background:linear-gradient(135deg,rgba(10,25,12,.97) 0%,rgba(0,0,0,.96) 100%);backdrop-filter:blur(20px);color:#fff;padding:0;border-radius:20px;text-align:left;width:85vw;max-width:800px;max-height:75vh;border:1px solid rgba(74,222,128,.35);opacity:0;pointer-events:none;transition:.6s cubic-bezier(.68,-.55,.27,1.55);box-shadow:0 25px 80px rgba(0,0,0,.8);overflow:hidden;display:flex;flex-direction:column}
+#versiculo.on{opacity:1;transform:translate(-50%,-50%) scale(1);pointer-events:all}
+#versiculo .v-top{height:4px;background:linear-gradient(90deg,#4ade80,#1a6b33,#4ade80);background-size:200% 100%;animation:shine 3s linear infinite}
+@keyframes shine{0%{background-position:0%}100%{background-position:200%}}
+#versiculo .v-content{padding:28px 38px;overflow-y:auto}
+#versiculo h2{margin:0 0 14px 0;font-size:12px;letter-spacing:3px;color:#4ade80;font-weight:900;text-transform:uppercase;display:flex;align-items:center;gap:10px}
+#versiculo h2::before{content:'';width:28px;height:2px;background:#4ade80;display:inline-block}
+#versiculo p{font-size:28px;line-height:1.32;margin:0;font-weight:800;word-wrap:break-word;white-space:pre-wrap;overflow-wrap:break-word}
+#versiculo .v-foot{padding:12px 38px;background:rgba(74,222,128,.08);border-top:1px solid rgba(74,222,128,.15);font-size:10px;letter-spacing:2px;opacity:.6;display:flex;justify-content:space-between;text-transform:uppercase}
+#ofertorio{bottom:90px;left:50%;transform:translateX(-50%) translateY(150%);background:#fff;color:#111;padding:25px 35px;border-radius:18px;width:500px;text-align:center;box-shadow:0 20px 50px rgba(0,0,0,.6);transition:.7s cubic-bezier(.68,-.55,.27,1.55)}
+#ofertorio.on{transform:translateX(-50%) translateY(0)}
+#abertura{inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column;opacity:0;pointer-events:none;transition:.8s;transform:scale(1.1)}
+#abertura.on{opacity:1;pointer-events:all;transform:scale(1)}
+#abertura .bg{position:absolute;inset:0;background:radial-gradient(ellipse at center,#1a6b33 0%,#0a2a14 60%,#050f08 100%);z-index:1}
+#abertura .bg::before{content:'';position:absolute;inset:0;background:repeating-linear-gradient(45deg,transparent 30px,rgba(74,222,128,.03) 30px,rgba(74,222,128,.03) 60px);animation:moveBg 20s linear infinite}
+@keyframes moveBg{0%{transform:translate(0,0)}100%{transform:translate(60px,60px)}}
+#abertura .content{position:relative;z-index:2;text-align:center;color:#fff}
+#abertura h1{font-family:'Bebas Neue';font-size:85px;margin:0;letter-spacing:3px;line-height:.9;text-shadow:0 5px 30px rgba(0,0,0,.8);animation:glow 2s ease-in-out infinite alternate}
+#abertura p{font-size:20px;margin:15px 0 0 0;opacity:.85;letter-spacing:1px;font-weight:400}
+#abertura .linha{width:120px;height:4px;background:linear-gradient(90deg,#4ade80,#1a6b33);margin:20px auto;border-radius:2px;animation:linhaGrow 1s ease-out .5s both}
+#abertura .sub2{margin-top:30px;font-size:11px;letter-spacing:4px;opacity:.5;text-transform:uppercase}
+@keyframes glow{from{text-shadow:0 5px 30px rgba(0,0,0,.8),0 0 20px rgba(74,222,128,.3)} to{text-shadow:0 5px 30px rgba(0,0,0,.8),0 0 40px rgba(74,222,128,.6)}}
+@keyframes linhaGrow{from{width:0} to{width:120px}}
 </style>
 </head><body>
-<div id="lock"><div class="lbox"><h2 style="margin:0;color:#4ade80">🔒 IEAD DOULOS</h2><p style="opacity:.6;font-size:13px">Digite a senha</p><input id="pass" type="password" maxlength="6" placeholder="••••••" inputmode="numeric"><button onclick="checkPass()" style="padding:14px;border:none;border-radius:10px;font-weight:900;background:#2faa58;color:#fff;width:100%;font-size:16px;cursor:pointer">ENTRAR</button><p id="err" style="color:#ff4444;display:none;margin-top:10px;font-size:13px">Senha incorreta!</p></div></div>
-
-<div class="top-tabs">
-<button id="t1" class="on" onclick="abrirTab('tarjas')">📺 TARJAS</button>
-<button id="t2" class="off" onclick="abrirTab('obs')">🎬 OBS PRO</button>
-<button class="glass" onclick="window.open('/display.html','_blank')" style="flex:0 0 50px">🖥️</button>
-</div>
-
-<!-- ABA 1: SEU APP NORMAL -->
-<div id="tab-tarjas" class="tab ativo">
-<h2 style="text-align:center;margin:10px 0;font-size:14px;letter-spacing:2px">🎛️ IEAD CONTROLE 2.0</h2>
-<div class="card"><h3>📹 CÂMERAS OBS</h3><div class="row"><button class="cam" onclick="mudar('PULPITO',this)">PÚLPITO</button><button class="cam" onclick="mudar('PUBLICO',this)">PÚBLICO</button><button class="cam" onclick="mudar('CORINGA',this)">GERAL</button></div><p id="status" class="small" style="text-align:center">Conectando OBS...</p></div>
-<div class="card"><h3>🔴 LIVE + ⏱️ CRONÔMETRO</h3><div class="row"><button class="on" onclick="send({live_on:true})">MOSTRAR 🔴LIVE</button><button class="off" onclick="send({live_on:false})">ESCONDER</button></div><div class="row"><button class="on" onclick="send({timer_action:'start'})">▶️ INICIAR</button><button class="off" onclick="send({timer_action:'pause'})">⏸️ PAUSAR</button></div><button class="off" style="width:100%;margin-top:6px" onclick="send({timer_action:'reset'})">🔄 ZERAR</button></div>
-<div class="card"><h3>🎤 PREGADOR</h3><input id="p_nome" placeholder="Nome: Pr. João Silva"><input id="p_cargo" placeholder="Cargo: Preletor"><label><input type="checkbox" id="p_auto" checked> Auto-esconder 8s</label><div class="row"><button class="on" onclick="mostrarPregador()">MOSTRAR</button><button class="off" onclick="send({pregador_on:false})">ESCONDER</button></div></div>
-<div class="card"><h3>📖 VERSÍCULO</h3><input id="v_ref" placeholder="João 3:16"><textarea id="v_txt" rows="2" placeholder="Texto..."></textarea><label><input type="checkbox" id="v_auto" checked> Auto-esconder 10s</label><div class="row"><button class="on" onclick="mostrarVersiculo()">MOSTRAR</button><button class="off" onclick="send({versiculo_on:false})">ESCONDER</button></div></div>
-<div class="card"><h3>💰 OFERTÓRIO</h3><div class="row"><button class="on" onclick="send({ofertorio_on:true})">MOSTRAR OFERTÓRIO</button><button class="off" onclick="send({ofertorio_on:false})">ESCONDER</button></div></div>
-<div class="card"><h3>🎬 TELAS CHEIAS</h3><input id="a_tit" value="CULTO INICIANDO"><input id="a_sub" value="Fique conosco"><div class="row"><button class="on" onclick="mostrarAbertura(a_tit.value,a_sub.value)">ABERTURA</button><button class="off" onclick="fecharTelas()">FECHAR</button></div><div class="row" style="margin-top:6px"><button class="cam" onclick="mostrarAbertura('VOLTAMOS EM BREVE','Já retornamos')">INTERVALO</button><button class="cam" onclick="mostrarAbertura('DEUS ABENÇOE','ATÉ O PRÓXIMO CULTO')">ENCERRAMENTO</button></div></div>
-</div>
-
-<!-- ABA 2: MEU CONTROLE PRO INTEGRADO -->
-<div id="tab-obs" class="tab">
-<h2 style="text-align:center;margin:10px 0;font-size:14px;letter-spacing:2px">🎬 OBS CONTROL PRO MAX</h2>
-<div class="card">
-<div class="row" style="margin-bottom:10px"><input id="obs_ip" value="localhost" placeholder="IP OBS" style="flex:1"><input id="obs_senha" value="iead123" style="width:110px" placeholder="Senha"><button class="on" onclick="conectarObsPro()">CONECTAR</button></div>
-<img id="preview" src=""><div style="display:flex;gap:6px;margin-top:8px"><button class="cam" style="flex:1;background:#16a34a" onclick="obsPro.call('StartStream')">▶ LIVE</button><button class="cam" style="flex:1;background:#dc2626" onclick="obsPro.call('StopStream')">⏹ FIM LIVE</button><button id="recBtn" class="cam" style="flex:1" onclick="toggleRecPro()">🔴 REC</button></div>
-<p id="obsStatusPro" class="small" style="text-align:center">Desconectado</p>
-</div>
-<div class="card"><h3>📹 CENAS - LISTA AUTOMÁTICA DO OBS</h3><div id="listaCenasPro" style="display:flex;gap:8px;overflow:auto"></div></div>
-<div class="card"><h3>🎚️ MIXER</h3><div id="mixerPro"></div><button class="off" style="width:100%;margin-top:8px" onclick="mutarTudoPro()">🔇 MUTAR TUDO</button></div>
-<div class="card"><h3>⚡ AÇÃO DUPLA - TARJA + CENA JUNTO</h3><p class="small">Quando mostrar versículo, já troca pra cena PÚLPITO</p><label><input type="checkbox" id="autoCena" checked> Auto trocar cena junto com tarja</label></div>
-</div>
-
+<div id="live" class="box"><div class="dot">🔴 AO VIVO</div><div class="time" id="live_time">00:00:00</div></div>
+<div id="bug" class="box">IEAD • MINISTÉRIO DOULOS</div>
+<div id="pregador" class="box"><h1 id="p_nome">Pr. Nome</h1><p id="p_cargo">Preletor</p></div>
+<div id="versiculo" class="box"><div class="v-top"></div><div class="v-content"><h2 id="v_ref">JOÃO 3:16</h2><p id="v_txt">Texto</p></div><div class="v-foot"><span>Palavra de Deus</span><span>IEAD Doulos</span></div></div>
+<div id="ofertorio" class="box"><h1 style="margin:0;color:#1a6b33;font-size:20px">💰 MOMENTO DE OFERTA E DÍZIMO</h1><p style="font-size:12px;line-height:1.5;margin:10px 0 0 0"><b>IGREJA EVAG. ASSEMBLEIA DE DEUS - MIN. DOULOS</b><br>CNPJ: 44.983.931/0001-22<br>PIX (CNPJ): 44.983.931/0001-22</p></div>
+<div id="abertura" class="box"><div class="bg"></div><div class="content"><h1 id="a_tit">CULTO<br>INICIANDO</h1><div class="linha"></div><p id="a_sub">Fique conosco - Já vamos começar</p><div class="sub2">IEAD • MINISTÉRIO DOULOS</div></div></div>
 <script>
-const SENHA="587433"; if(localStorage.getItem('iead_auth')==='ok') document.getElementById('lock').style.display='none';
-function checkPass(){if(document.getElementById('pass').value===SENHA){localStorage.setItem('iead_auth','ok');document.getElementById('lock').style.display='none'}else{let e=document.getElementById('err');e.style.display='block';setTimeout(()=>e.style.display='none',2000)}}
-function abrirTab(t){document.querySelectorAll('.tab').forEach(x=>x.classList.remove('ativo')); document.getElementById('tab-'+t).classList.add('ativo'); document.getElementById('t1').className=t==='tarjas'?'on':'off'; document.getElementById('t2').className=t==='obs'?'on':'off';}
-const socket=io(); function send(d){socket.emit('update',d)}
-function mostrarPregador(){send({pregador_nome:p_nome.value,pregador_cargo:p_cargo.value,pregador_on:true,pregador_auto:p_auto.checked}); if(autoCena.checked) mudarAuto('PULPITO')}
-function mostrarVersiculo(){send({v_ref:v_ref.value,v_txt:v_txt.value,versiculo_on:true,versiculo_auto:v_auto.checked}); if(autoCena.checked) mudarAuto('PULPITO')}
-function mostrarAbertura(t,s){send({abertura_on:true,a_tit:t,a_sub:s})}
-function fecharTelas(){send({abertura_on:false})}
-const obs=new OBSWebSocket(); const obsPro=new OBSWebSocket(); let conectado=false, loop=null, grav=false;
-async function con(){try{await obs.connect('ws://localhost:4455','iead123');status.innerText='✅ OBS conectado'; obsPro._connected=true; conectado=true; carregarObsPro()}catch{status.innerText='❌ Liga o WebSocket no OBS - senha iead123'}}
-con();
-function mudar(n,b){document.querySelectorAll('.cam').forEach(x=>{if(x.textContent===n||x.textContent.includes(n)) {}}); obs.call('SetCurrentProgramScene',{sceneName:n}).catch(()=>status.innerText='Cena '+n+' não existe'); if(b){document.querySelectorAll('#tab-tarjas .cam').forEach(x=>x.classList.remove('ativo')); b.classList.add('ativo')}}
-function mudarAuto(n){obs.call('SetCurrentProgramScene',{sceneName:n}).catch(()=>{})}
-async function conectarObsPro(){let ip=document.getElementById('obs_ip').value.trim(); let senha=document.getElementById('obs_senha').value.trim(); try{await obsPro.connect(`ws://${ip}:4455`,senha); conectado=true; document.getElementById('obsStatusPro').textContent='✅ Conectado'; carregarObsPro()}catch(e){document.getElementById('obsStatusPro').textContent='❌ '+e.message}}
-async function carregarObsPro(){
- try{
-  const {scenes,currentProgramSceneName}=await obsPro.call('GetSceneList');
-  const lista=document.getElementById('listaCenasPro'); lista.innerHTML='';
-  scenes.forEach(s=>{const b=document.createElement('button'); b.className='cam'+(s.sceneName===currentProgramSceneName?' ativo':''); b.textContent=s.sceneName; b.onclick=()=>obsPro.call('SetCurrentProgramScene',{sceneName:s.sceneName}); lista.appendChild(b)});
-  const {inputs}=await obsPro.call('GetInputList'); const mixer=document.getElementById('mixerPro'); mixer.innerHTML='';
-  for(let inp of inputs){try{const {inputMuted}=await obsPro.call('GetInputMute',{inputName:inp.inputName}); const d=document.createElement('div'); d.style.cssText='display:flex;gap:8px;align-items:center;margin:6px 0'; d.innerHTML=`<div style="flex:1;font-size:12px">${inp.inputName}</div><button class="${inputMuted?'on':'off'}" style="padding:8px" onclick="toggleMutePro('${inp.inputName}')">${inputMuted?'🔇':'🎙️'}</button>`; mixer.appendChild(d)}catch(e){}}
-  clearInterval(loop); loop=setInterval(async()=>{try{const {currentProgramSceneName}=await obsPro.call('GetCurrentProgramScene'); const {imageData}=await obsPro.call('GetSourceScreenshot',{sourceName:currentProgramSceneName,imageFormat:'jpeg',imageWidth:480,imageQuality:25}); document.getElementById('preview').src=imageData}catch(e){}},150);
- }catch(e){console.log(e)}
-}
-async function toggleMutePro(n){await obsPro.call('ToggleInputMute',{inputName:n}); carregarObsPro()}
-async function mutarTudoPro(){const {inputs}=await obsPro.call('GetInputList'); for(let i of inputs){try{await obsPro.call('SetInputMute',{inputName:i.inputName,inputMuted:true})}catch(e){}} carregarObsPro()}
-async function toggleRecPro(){if(!grav){await obsPro.call('StartRecord'); grav=true; recBtn.textContent='⏹ STOP'; recBtn.style.background='#dc2626'}else{await obsPro.call('StopRecord'); grav=false; recBtn.textContent='🔴 REC'; recBtn.style.background='#222'}}
-</script>
-</body></html>
+const socket=io();
+let timerInt=null, cultoStart=null, cultoAcc=0;
+function startTimer(){if(timerInt) clearInterval(timerInt); cultoStart=Date.now(); timerInt=setInterval(()=>{let diff=Date.now()-cultoStart+cultoAcc; let s=Math.floor(diff/1000); let h=String(Math.floor(s/3600)).padStart(2,'0'), m=String(Math.floor(s%3600/60)).padStart(2,'0'), sec=String(s%60).padStart(2,'0'); live_time.innerText=`${h}:${m}:${sec}`},1000)}
+function stopTimer(){clearInterval(timerInt); if(cultoStart) cultoAcc+=Date.now()-cultoStart; cultoStart=null}
+function autoFit(){const p=document.getElementById('v_txt');const box=document.getElementById('versiculo');let size=28;p.style.fontSize=size+'px';while(box.scrollHeight > window.innerHeight*0.78 && size>14){size-=1;p.style.fontSize=size+'px';}}
+socket.on('update',d=>{
+ if(d.live_on!==undefined) live.classList.toggle('on',d.live_on);
+ if(d.timer_action==='start') startTimer();
+ if(d.timer_action==='pause') stopTimer();
+ if(d.timer_action==='reset'){stopTimer();cultoAcc=0;live_time.innerText='00:00:00'}
+ if(d.bug_on){bug.classList.remove('on');void bug.offsetWidth;bug.classList.add('on'); if(d.bug_loop){setTimeout(()=>{if(document.querySelector('#bug.on')){bug.classList.remove('on');void bug.offsetWidth;bug.classList.add('on')}},9000)}}
+ if(d.pregador_on!==undefined){if(d.pregador_nome) p_nome.innerText=d.pregador_nome;if(d.pregador_cargo) p_cargo.innerText=d.pregador_cargo;if(d.pregador_on) pregador.classList.add('on'); else pregador.classList.remove('on');if(d.pregador_on && d.pregador_auto) setTimeout(()=>pregador.classList.remove('on'),8000);}
+ if(d.versiculo_on!==undefined){if(d.v_ref) v_ref.innerText=d.v_ref;if(d.v_txt) v_txt.innerText=d.v_txt;if(d.versiculo_on){versiculo.classList.add('on'); setTimeout(autoFit,80);}else versiculo.classList.remove('on');if(d.versiculo_on && d.versiculo_auto) setTimeout(()=>versiculo.classList.remove('on'),10000);}
+ if(d.ofertorio_on!==undefined) ofertorio.classList.toggle('on',!!d.ofertorio_on);
+ if(d.abertura_on!==undefined){if(d.a_tit) a_tit.innerHTML=d.a_tit.replace('\n','<br>');if(d.a_sub!==undefined) a_sub.innerText=d.a_sub;if(d.abertura_on) abertura.classList.add('on'); else abertura.classList.remove('on');}
+});
+</script></body></html>
