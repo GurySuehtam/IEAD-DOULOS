@@ -10,18 +10,15 @@ const io = new Server(server, { cors: { origin: "*" } });
 
 app.use(express.static(__dirname));
 
-let estadoAtual = {}; // guarda o último estado
+let estadoAtual = {};
 
 io.on('connection', (socket) => {
   console.log('Conectado:', socket.id);
-  // manda o estado atual pra quem acabou de entrar
   socket.emit('update', estadoAtual);
-
   socket.on('update', (data) => {
     estadoAtual = { ...estadoAtual, ...data };
-    io.emit('update', estadoAtual); // manda pra todo mundo
+    io.emit('update', estadoAtual);
   });
-
   socket.on('timer_tick', (val) => {
     io.emit('timer_tick', val);
   });
