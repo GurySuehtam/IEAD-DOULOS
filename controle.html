@@ -20,7 +20,6 @@ label{font-size:12px;display:flex;align-items:center;gap:6px;margin:6px 0}
 </style>
 </head><body>
 <div id="lock"><div class="lbox"><h2 style="margin:0;color:#4ade80">🔒 IEAD DOULOS</h2><p style="opacity:.6;font-size:13px">Digite a senha</p><input id="pass" type="password" maxlength="6" placeholder="••••••" inputmode="numeric"><button onclick="checkPass()">ENTRAR</button><p id="err" style="color:#ff4444;display:none;margin-top:10px;font-size:13px">Senha incorreta!</p></div></div>
-
 <h2 style="text-align:center;margin:10px 0">🎛️ IEAD CONTROLE 2.0 - COMPLETO</h2>
 <div class="card"><h3>📹 CÂMERAS OBS</h3><div class="row"><button class="cam" onclick="mudar('PULPITO',this)">PÚLPITO</button><button class="cam" onclick="mudar('PUBLICO',this)">PÚBLICO</button><button class="cam" onclick="mudar('CORINGA',this)">GERAL</button></div><p id="status" class="small" style="text-align:center">Conectando OBS...</p></div>
 <div class="card"><h3>🔴 LIVE + ⏱️ CRONÔMETRO DO CULTO</h3>
@@ -67,12 +66,8 @@ const socket=io();
 function send(d){socket.emit('update',d)}
 function mostrarPregador(){send({pregador_nome:p_nome.value,pregador_cargo:p_cargo.value,pregador_on:true,pregador_auto:p_auto.checked})}
 function mostrarVersiculo(){send({v_ref:v_ref.value,v_txt:v_txt.value,versiculo_on:true,versiculo_auto:v_auto.checked})}
-function mostrarAbertura(tit, sub){
-  send({abertura_on:true,a_tit:tit,a_sub:sub})
-}
-function fecharTelas(){
-  send({abertura_on:false})
-}
+function mostrarAbertura(tit, sub){send({abertura_on:true,a_tit:tit,a_sub:sub})}
+function fecharTelas(){send({abertura_on:false})}
 const obs=new OBSWebSocket();
 async function con(){try{await obs.connect('ws://localhost:4455','iead123');status.innerText='✅ OBS conectado'}catch{status.innerText='❌ Liga o WebSocket no OBS - senha iead123'}}
 con();
