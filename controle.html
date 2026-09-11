@@ -7,20 +7,30 @@ body{margin:0;background:#0a0a0a;color:#fff;font-family:Arial;padding:12px}
 .card{background:#1c1c1c;border:1px solid #2a2a2a;border-radius:14px;padding:14px;margin:12px 0}
 h3{margin:0 0 10px 0;font-size:14px;letter-spacing:1px;color:#4ade80}
 input,textarea{width:100%;padding:11px;margin:5px 0;border-radius:8px;border:1px solid #333;background:#111;color:#fff;box-sizing:border-box}
-.row{display:flex;gap:6px} .row button{flex:1}
+.row{display:flex;gap:6px}.row button{flex:1}
 button{padding:12px;border:none;border-radius:9px;font-weight:800;cursor:pointer;transition:.2s}
-.on{background:#1a6b33;color:#fff} .on:active{transform:scale(.97)}
-.off{background:#2a2a2a;color:#bbb} .cam{background:#222;border:1px solid #333;color:#fff;padding:14px} .cam.ativo{background:#1a6b33;border-color:#4ade80;box-shadow:0 0 15px rgba(74,222,128,.4)}
+.on{background:#1a6b33;color:#fff}.on:active{transform:scale(.97)}
+.off{background:#2a2a2a;color:#bbb}.cam{background:#222;border:1px solid #333;color:#fff;padding:14px}.cam.ativo{background:#1a6b33;border-color:#4ade80;box-shadow:0 0 15px rgba(74,222,128,.4)}
 .small{font-size:11px;opacity:.6;margin:6px 0}
 label{font-size:12px;display:flex;align-items:center;gap:6px;margin:6px 0}
 #lock{position:fixed;inset:0;background:#050a06;z-index:99999;display:flex;align-items:center;justify-content:center}
-#lock .lbox{background:#1a1f1c;padding:30px;border-radius:20px;border:1px solid #2faa58;width:90%;max-width:320px;text-align:center}
+#lock.lbox{background:#1a1f1c;padding:30px;border-radius:20px;border:1px solid #2faa58;width:90%;max-width:320px;text-align:center}
 #lock input{text-align:center;font-size:22px;letter-spacing:8px;margin:15px 0;padding:12px;border-radius:8px;border:1px solid #333;background:#111;color:#fff;width:100%;box-sizing:border-box}
 #lock button{padding:14px;border:none;border-radius:10px;font-weight:900;background:#2faa58;color:#fff;width:100%;font-size:16px;cursor:pointer}
 </style>
 </head><body>
 <div id="lock"><div class="lbox"><h2 style="margin:0;color:#4ade80">🔒 IEAD DOULOS</h2><p style="opacity:.6;font-size:13px">Digite a senha</p><input id="pass" type="password" maxlength="6" placeholder="••••••" inputmode="numeric"><button onclick="checkPass()">ENTRAR</button><p id="err" style="color:#ff4444;display:none;margin-top:10px;font-size:13px">Senha incorreta!</p></div></div>
+
 <h2 style="text-align:center;margin:10px 0">🎛️ IEAD CONTROLE 2.0 - COMPLETO</h2>
+
+<div style="background:linear-gradient(90deg,#7c3aed,#4ade80);padding:14px;border-radius:14px;margin:12px 0;display:flex;justify-content:space-between;align-items:center;border:1px solid rgba(255,255,255,.2);box-shadow:0 8px 25px rgba(124,58,237,.35)">
+<div>
+<div style="font-weight:900;font-size:15px;color:#fff;letter-spacing:.5px">🎬 CONTROLE OBS PRO MAX</div>
+<div style="font-size:11px;color:#fff;opacity:.9;margin-top:2px">Preview, Cenas, Mixer e Live</div>
+</div>
+<a href="/controle-obs.html" style="background:#fff;color:#111;padding:14px 20px;border-radius:10px;font-weight:900;text-decoration:none;font-size:13px;box-shadow:0 4px 15px rgba(0,0,0,.3)">ABRIR →</a>
+</div>
+
 <div class="card"><h3>📹 CÂMERAS OBS</h3><div class="row"><button class="cam" onclick="mudar('PULPITO',this)">PÚLPITO</button><button class="cam" onclick="mudar('PUBLICO',this)">PÚBLICO</button><button class="cam" onclick="mudar('CORINGA',this)">GERAL</button></div><p id="status" class="small" style="text-align:center">Conectando OBS...</p></div>
 <div class="card"><h3>🔴 LIVE + ⏱️ CRONÔMETRO DO CULTO</h3>
 <div class="row"><button class="on" onclick="send({live_on:true})">MOSTRAR 🔴LIVE</button><button class="off" onclick="send({live_on:false})">ESCONDER</button></div>
@@ -52,9 +62,8 @@ label{font-size:12px;display:flex;align-items:center;gap:6px;margin:6px 0}
 <div class="row"><button class="on" onclick="mostrarAbertura(a_tit.value, a_sub.value)">ABERTURA</button><button class="off" onclick="fecharTelas()">FECHAR</button></div>
 <div class="row" style="margin-top:6px"><button class="cam" onclick="mostrarAbertura('VOLTAMOS EM BREVE','Já retornamos')">INTERVALO</button><button class="cam" onclick="mostrarAbertura('DEUS ABENÇOE','ATÉ O PRÓXIMO CULTO - IEAD DOULOS')">ENCERRAMENTO</button></div>
 </div>
-<div class="card"><h3>👋 EXTRAS QUE VOCÊ PEDIU - AGORA COM FECHAR</h3>
+<div class="card"><h3>👋 EXTRAS</h3>
 <div class="row"><button class="cam" style="background:#0f3d1f;border:1px solid #2faa58" onclick="mostrarAbertura('SEJA\nBEM-VINDO!','Você é nosso convidado especial\nIEAD MINISTÉRIO DOULOS')">BOAS-VINDAS</button><button class="cam" style="background:#0f3d1f;border:1px solid #2faa58" onclick="mostrarAbertura('SANTA CEIA\nDO SENHOR','Fazei isto em memória de mim\n1 Coríntios 11:24')">SANTA CEIA</button></div>
-<p class="small">Agora esses 2 usam a tela cheia caprichada e o botão FECHAR funciona pra eles!</p>
 <div class="row" style="margin-top:6px"><button class="off" onclick="fecharTelas()">FECHAR BOAS-VINDAS / SANTA CEIA</button></div>
 </div>
 <script>
